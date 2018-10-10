@@ -1,6 +1,6 @@
 #!/bin/bash
 while [ "$OSBOOL" != '1' ] && [ "$OSBOOL" != '2' ]; do
-	echo "What Operating system base?"
+	echo "What Operating system?"
 	echo "1: Debian"
 	echo "2: CentOS"
 	read OSBOOL
@@ -96,10 +96,6 @@ grep "avg:" sysbench-RAM-1G-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 echo "iPerf" >> $SYSTEM-final.txt
 cat iperf-local-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 
-echo "Press Enter to upload results to Fang"
-read NULL
-
-scp $SYSTEM-final.txt chient@fang.cs.sunyit.edu:~/www/hypervisor/
-
+echo "Benchmarking Completed! File $SYSTEM-final.txt contains the results!"
 
 exit 0
