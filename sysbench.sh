@@ -1,11 +1,22 @@
 #!/bin/bash
-while [ "$OSBOOL" != '1' ] && [ "$OSBOOL" != '2' ]; do
+
+# DEFINITIONS
+# OSINT - Interger for OS ( 1 for Debian/Ubuntu, 2 for CentOS, 3 for FreeBSD [NOT WORKING])
+# PLATINT - Interger for Source Platform ( 0; Baremetal, 1; Proxmox, 2; Xen/XenServer, 3; Hyper-V Server, 4; VMware (ESXi and vSphere), 5; oVirt )
+# OS - String for the OS
+# PLATFORM - String for the platform
+# SYSTEM - String for the combination of the OS and Platform in the order "OS-PLATFORM"
+
+
+while [ "$OSINT" != '1' ] && [ "$OSINT" != '2' ]; do
 	echo "What Operating system?"
-	echo "1: Debian"
+	echo "1: Debian/Ubuntu"
 	echo "2: CentOS"
-	read OSBOOL
+	read OSINT
 done
-while [ "$PLATBOOL" != '0' ] && [ "$PLATBOOL" != '1' ] && [ "$PLATBOOL" != '2' ] && [ "$PLATBOOL" != '3' ] && [ "$PLATBOOL" != '4' ] && [ "$PLATBOOL" != '5' ]; do
+
+
+while [ "$PLATINT" != '0' ] && [ "$PLATINT" != '1' ] && [ "$PLATINT" != '2' ] && [ "$PLATINT" != '3' ] && [ "$PLATINT" != '4' ] && [ "$PLATINT" != '5' ]; do
 	echo "What Platform?"
 	echo "0: Baremetal"
 	echo "1: ProxMox"
@@ -13,39 +24,48 @@ while [ "$PLATBOOL" != '0' ] && [ "$PLATBOOL" != '1' ] && [ "$PLATBOOL" != '2' ]
 	echo "3: Hyper-V"
 	echo "4: VMware"
 	echo "5: oVirt"
-read PLATBOOL
+	read PLATINT
 done
-if [ "$OSBOOL" == '1' ]; then
+
+
+if [ "$OSINT" == '1' ]; then
         OS='Debian'
         apt update
         apt install sysbench iperf -y
-elif [ "$OSBOOL" = '2' ]; then
+elif [ "$OSINT" = '2' ]; then
         OS='CentOS'
         yum check-update -y
         yum install epel-release -y
         yum update -y
         yum install sysbench iperf -y
 fi
-if [ "$PLATBOOL" == '0' ]; then
+
+
+if [ "$PLATINT" == '0' ]; then
 	PLATFORM='Baremetal' 
-elif [ "$PLATBOOL" == '1' ]; then
+elif [ "$PLATINT" == '1' ]; then
 	PLATFORM='ProxMox'
-elif [ "$PLATBOOL" == '2' ]; then
+elif [ "$PLATINT" == '2' ]; then
 	PLATFORM='XenServer'
-elif [ "$PLATBOOL" == '3' ]; then
+elif [ "$PLATINT" == '3' ]; then
 	PLATFORM='Hyper-V'
-elif [ "$PLATBOOL" == '4' ]; then
+elif [ "$PLATINT" == '4' ]; then
 	PLATFORM='VMware'
-elif [ "$PLATBOOL" == '5' ]; then
+elif [ "$PLATINT" == '5' ]; then
 	PLATFORM='oVirt'
 fi
+
+
 export SYSTEM="$OS-$PLATFORM"
+
 
 echo "Press Enter to begin benchmarks!"
 read NULL
 
+
 for COUNTER in 1 2 3; do
 	#iPerf Local Test (-r Argument failed on CentOS)
+	# 172.30.0.12 was the iPerf Server, IP needs to be changed
 	iperf -c 172.30.0.12 | tee iperf-local-$SYSTEM-Run-$COUNTER.txt
 	#iPerf Internet Test (Not run, blocked by campus firewall)
 	#iperf -c iperf.he.net -r | tee iperf-remote-$OS-Run-$COUNTER.txt
