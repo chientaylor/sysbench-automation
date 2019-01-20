@@ -34,9 +34,8 @@ if [ "$OSINT" == '1' ]; then
         apt install sysbench iperf -y
 elif [ "$OSINT" = '2' ]; then
         OS='CentOS'
-        yum check-update -y
-        yum install epel-release -y
         yum update -y
+        yum install epel-release -y
         yum install sysbench iperf -y
 fi
 
@@ -92,10 +91,10 @@ done
 touch $SYSTEM-final.txt
 echo "Final Results" >> $SYSTEM-final.txt
 echo "OpenSSL" >> $SYSTEM-final.txt
-grep "md5 " openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
-grep "sha1" openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
+grep "md5        " openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
+grep "sha1       " openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 grep "aes-256 cbc" openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
-grep "sha512" openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
+grep "sha512     " openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 echo "                  sign    verify    sign/s verify/s" >> $SYSTEM-final.txt
 grep "rsa 4096" openssl-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 echo "CPU" >> $SYSTEM-final.txt
