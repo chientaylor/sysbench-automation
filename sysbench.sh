@@ -8,10 +8,11 @@
 # SYSTEM - String for the combination of the OS and Platform in the order "OS-PLATFORM"
 
 
-while [ "$OSINT" != '1' ] && [ "$OSINT" != '2' ]; do
+while [ "$OSINT" != '1' ] && [ "$OSINT" != '2' ] && [ "$OSINT" != '3' ]; do
 	echo "What Operating system?"
 	echo "1: Debian/Ubuntu"
 	echo "2: CentOS"
+	echo "3: FreeBSD (Testing)"
 	read OSINT
 done
 
@@ -37,6 +38,13 @@ elif [ "$OSINT" = '2' ]; then
         yum update -y
         yum install epel-release -y
         yum install sysbench iperf -y
+elif [ "$OSINT" = '3' ]; then
+	OS='FreeBSD'
+	pkg update
+	pkg install sysbench iperf -y
+else
+	echo "Something has gone wrong with OS detection! Exiting!"
+	exit 1
 fi
 
 
@@ -52,6 +60,9 @@ elif [ "$PLATINT" == '4' ]; then
 	PLATFORM='VMware'
 elif [ "$PLATINT" == '5' ]; then
 	PLATFORM='oVirt'
+else
+	echo "Something has gone wrong with Platform detection! Exiting!"
+	exit 1
 fi
 
 
@@ -62,29 +73,40 @@ echo "Press Enter to begin benchmarks!"
 read NULL
 
 
-for COUNTER in 1 2 3; do
+for COUNTER in 1 2 3 4 5; do
 	#iPerf Local Test (-r Argument failed on CentOS)
 	# 172.30.0.12 was the iPerf Server, IP needs to be changed
+	echo "Performing local iPerf benchmark for test $COUNTER"
 	iperf -c 172.30.0.12 | tee iperf-local-$SYSTEM-Run-$COUNTER.txt
 	#iPerf Internet Test (Not run, blocked by campus firewall)
+	#echo "Performing remote iPerf benchmark for test $COUNTER"
 	#iperf -c iperf.he.net -r | tee iperf-remote-$OS-Run-$COUNTER.txt
 	# CPU Test
+	echo "Performing CPU benchmark for test $COUNTER"
 	sysbench --test=cpu --cpu-max-prime=20000 run | tee sysbench-CPU-$SYSTEM-Run-$COUNTER.txt
 	# Disk Test Preparation
+	echo "Preparing disk benchmark for test $COUNTER"
 	sysbench --test=fileio --file-total-size=5G prepare
 	# Disk Test Run
+	echo "Performing Disk benchmark for test $COUNTER"
 	sysbench --test=fileio --file-total-size=5G --file-test-mode=rndrw --init-rng=on --max-time=300 --max-requests=0 run | tee sysbench-Disk-$SYSTEM-Run-$COUNTER.txt
 	# Disk Test Cleanup
+	echo "Performing Disk cleanup for test $COUNTER"
 	sysbench --test=fileio --file-total-size=5G cleanup
 	# Memory Test Large
+	echo "Performing 1GB Memory benchmark for test $COUNTER"
 	sysbench --test=memory --memory-block-size=1G --memory-total-size=10G run | tee sysbench-RAM-1G-$SYSTEM-Run-$COUNTER.txt
 	# Memory Test Medium
+	echo "Performing 1MB Memory benchmark for test $COUNTER"
 	sysbench --test=memory --memory-block-size=1M --memory-total-size=10G run | tee sysbench-RAM-1M-$SYSTEM-Run-$COUNTER.txt
 	# Memory Test Small
+	echo "Performing 1KB Memory benchmark for test $COUNTER"
 	sysbench --test=memory --memory-block-size=1K --memory-total-size=10G run | tee sysbench-RAM-1K-$SYSTEM-Run-$COUNTER.txt
 	# OpenSSL Speed Test
+	echo "Performing OpenSSL benchmark for test $COUNTER"
 	openssl speed | tee openssl-$SYSTEM-Run-$COUNTER.txt
 	# Allow System to recover before next run
+	echo "Sleeping for 60 seconds"
 	sleep 60
 done
 
