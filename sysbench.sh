@@ -1,12 +1,15 @@
 #!/bin/bash
 
 # DEFINITIONS
+# LOCALIPERF - String for the local iPerf server's address or DNS name.
+#	If LOCALIPERF is set to 'none', the local iPerf test will not be run.
 # OSINT - Interger for OS ( 1 for Debian/Ubuntu, 2 for CentOS, 3 for FreeBSD [NOT WORKING])
 # PLATINT - Interger for Source Platform ( 0; Baremetal, 1; Proxmox, 2; Xen/XenServer, 3; Hyper-V Server, 4; VMware (ESXi and vSphere), 5; oVirt )
 # OS - String for the OS
 # PLATFORM - String for the platform
 # SYSTEM - String for the combination of the OS and Platform in the order "OS-PLATFORM"
 
+LOCALIPERF = none
 
 while [ "$OSINT" != '1' ] && [ "$OSINT" != '2' ] && [ "$OSINT" != '3' ]; do
 	echo "What Operating system?"
@@ -74,13 +77,16 @@ read NULL
 
 
 for COUNTER in 1 2 3 4 5; do
-	#iPerf Local Test (-r Argument failed on CentOS)
-	# 172.30.0.12 was the iPerf Server, IP needs to be changed
-	echo "Performing local iPerf benchmark for test $COUNTER"
-	iperf -c 172.30.0.12 | tee iperf-local-$SYSTEM-Run-$COUNTER.txt
-	#iPerf Internet Test (Not run, blocked by campus firewall)
-	#echo "Performing remote iPerf benchmark for test $COUNTER"
-	#iperf -c iperf.he.net -r | tee iperf-remote-$OS-Run-$COUNTER.txt
+	if [ "$LOCALIPERF" == 'none' ]; then
+		echo "Local iPerf server not set, so test not run."
+	else
+		#iPerf Local Test
+		echo "Performing local iPerf benchmark for test $COUNTER"
+		iperf -c $LOCALIPERF | tee iperf-local-$SYSTEM-Run-$COUNTER.txt
+	fi
+	#iPerf Internet Test using HurricanElectric's servers
+	echo "Performing remote iPerf benchmark for test $COUNTER"
+	iperf -c iperf.he.net -r | tee iperf-remote-$SYSTEM-Run-$COUNTER.txt
 	# CPU Test
 	echo "Performing CPU benchmark for test $COUNTER"
 	sysbench --test=cpu --cpu-max-prime=20000 run | tee sysbench-CPU-$SYSTEM-Run-$COUNTER.txt
@@ -134,8 +140,14 @@ grep "avg:" sysbench-RAM-1M-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 echo "RAM 1G" >> $SYSTEM-final.txt
 grep "total time:" sysbench-RAM-1G-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 grep "avg:" sysbench-RAM-1G-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
-echo "iPerf" >> $SYSTEM-final.txt
-cat iperf-local-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
+if [ "$LOCALIPERF" == 'none' ]; then
+	echo "Local iPerf test was not run, no results to report" >> $SYSTEM-final.txt
+else
+	echo "iPerf Local" >> $SYSTEM-final.txt
+	cat iperf-local-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
+fi
+echo "iPerf Remote" >> $SYSTEM-final.txt
+cat iperf-remote-$SYSTEM-Run-*.txt >> $SYSTEM-final.txt
 
 echo "Benchmarking Completed! File $SYSTEM-final.txt contains the results!"
 
