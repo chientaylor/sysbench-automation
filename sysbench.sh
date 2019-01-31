@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Written by TAYLOR CHIEN
+#  Last Modified: 2019-01-31
+
 # DEFINITIONS
 # LOCALIPERF - String for the local iPerf server's address or DNS name.
 #	If LOCALIPERF is set to 'none', the local iPerf test will not be run.
